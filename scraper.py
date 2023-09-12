@@ -23,25 +23,16 @@ labNames = [["Programmazione 1 - LAB (gruppo 1)", "Programmazione 1 - LAB (grupp
 
 def main():
     htmlContent = loadHTMLContent(url)
-    boxesContent = getBoxesContent(htmlContent)
+    lessonsPerDay = getNumberOfLessonsPerDay(htmlContent)
+    lessonData = getBoxesLessonData(htmlContent)
     
-    lessonsPerDay = []
-    
-    boxIdx = 0
     for i in range(5):  # from monday to friday
-        lastStart = -1
-        lastEnd = -1
-        anotherLessonToday = True
-        
-        while anotherLessonToday:
-            boxInfo = boxToDict(boxesContent[boxIdx])
+        print("Day of week: ", (i+1))
+        for j in range(lessonsPerDay[i]):
+            boxInfo = boxToDict(lessonData[i*j + j])
             name, prof, room, start, end = boxInfo.values()
-            
-            # anotherLessonToday = 
-            
-            
-            
-            boxIdx += 1
+            print(name)
+
 
 
 def boxToDict(box):
@@ -58,13 +49,27 @@ def boxToDict(box):
     
     return d
 
-def getBoxesContent(htmlContent):
+def getTableClasses(htmlContent):
+    soup = BeautifulSoup(str(htmlContent), 'html.parser')
+    return soup.find_all('div', class_='rTableClass')
+
+def getBoxesLessonData(htmlContent):
     soup = BeautifulSoup(str(htmlContent), 'html.parser')
     return soup.find_all('div', class_='rClassContent')
 
 def getCellsContent(boxContent):
     soup = BeautifulSoup(boxContent, 'html.parser')
     return soup.find_all('div', class_='rTableCell')
+
+def getNumberOfLessonsPerDay(htmlContent):
+    numberOfLessonsPerDay = [0] * 5
+    tableClass = getTableClasses(htmlContent)
+    for cl in tableClass:
+        s = str(cl)
+        day = s.find("day-")
+        dayIdx = int(s[day+4])
+        numberOfLessonsPerDay[dayIdx - 1] += 1
+    return numberOfLessonsPerDay
 
 def loadHTMLContent(url):
     options = webdriver.ChromeOptions()
