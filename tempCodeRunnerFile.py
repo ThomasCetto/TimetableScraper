@@ -1,0 +1,1 @@
+d["course_name"] = ps[0].text

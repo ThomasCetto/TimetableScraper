@@ -9,7 +9,7 @@ url = "https://easyacademy.unitn.it/AgendaStudentiUnitn/index.php?view=easycours
 
 calculusInEnglish = programmingInEnglish = geometryInEnglish = group2 = False
 
-calculusNames = ["Analisi Matematica 1", "Calculus 1"]
+calculusNames = ["Analisi matematica 1", "Calculus 1"]
 geometryNames = ["Geometria e algebra lineare", "Geometry and Linear Algebra"]
 programmingNames = ["Programmazione 1 - LEZ", "Computer Programming 1 - LEZ"]
 labNames = [["Programmazione 1 - LAB (gruppo 1)", "Programmazione 1 - LAB (gruppo 2)"], 
@@ -17,21 +17,33 @@ labNames = [["Programmazione 1 - LAB (gruppo 1)", "Programmazione 1 - LAB (grupp
 # labNames[programmingInEnglish][group2]
 # es. labNames[0][1] -> italiano e gruppo
 
+validNames = []
+
 
 
 
 
 def main():
+    validNames.append(calculusNames[calculusInEnglish])
+    validNames.append(geometryNames[geometryInEnglish])
+    validNames.append(programmingNames[programmingInEnglish])
+    validNames.append(labNames[programmingInEnglish][group2])
+    
+    
     htmlContent = loadHTMLContent(url)
     lessonsPerDay = getNumberOfLessonsPerDay(htmlContent)
     lessonData = getBoxesLessonData(htmlContent)
     
+    dayNames = ["lunedi", "martedi", "mercoledi", "giovedi", "venerdi"]
+    
+    idx = 0
     for i in range(5):  # from monday to friday
-        print("Day of week: ", (i+1))
-        for j in range(lessonsPerDay[i]):
-            boxInfo = boxToDict(lessonData[i*j + j])
-            name, prof, room, start, end = boxInfo.values()
-            print(name)
+        for j in range(lessonsPerDay[i]):  # for each lesson of that day
+            boxInfo = boxToDict(lessonData[idx])
+            if boxInfo is not None:
+                name, prof, room, start, end = boxInfo.values()
+            
+            idx += 1
 
 
 
@@ -47,7 +59,10 @@ def boxToDict(box):
     d["start"] = ps[3 - absentProfName].text[:5]
     d["end"] = ps[3 - absentProfName].text[8:13]
     
-    return d
+    return d if userFollowsCourse(d) else None
+
+def userFollowsCourse(d):
+    return d["course_name"] in validNames
 
 def getTableClasses(htmlContent):
     soup = BeautifulSoup(str(htmlContent), 'html.parser')
