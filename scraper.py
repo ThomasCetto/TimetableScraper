@@ -13,7 +13,7 @@ calculusNames = ["Analisi matematica 1", "Calculus 1"]
 geometryNames = ["Geometria e algebra lineare", "Geometry and Linear Algebra"]
 programmingNames = ["Programmazione 1 - LEZ", "Computer Programming 1 - LEZ"]
 labNames = [["Programmazione 1 - LAB (gruppo 1)", "Programmazione 1 - LAB (gruppo 2)"], 
-            ["Computer Programming 1 - LAB (gruppo1)", "Computer Programming 1 - LAB (gruppo2)"]]
+            ["Computer Programming 1 - LAB", "Computer Programming 1 - LAB"]]
 # labNames[programmingInEnglish][group2]
 # es. labNames[0][1] -> italiano e gruppo
 
@@ -24,25 +24,24 @@ validNames = []
 
 
 def main():
-    validNames.append(calculusNames[calculusInEnglish])
-    validNames.append(geometryNames[geometryInEnglish])
-    validNames.append(programmingNames[programmingInEnglish])
-    validNames.append(labNames[programmingInEnglish][group2])
+    getUserChoices()
+    addValidNames()
     
     
     htmlContent = loadHTMLContent(url)
     lessonsPerDay = getNumberOfLessonsPerDay(htmlContent)
     lessonData = getBoxesLessonData(htmlContent)
     
-    dayNames = ["lunedi", "martedi", "mercoledi", "giovedi", "venerdi"]
+    dayNames = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì"]
     
     idx = 0
     for i in range(5):  # from monday to friday
+        print(f"\n{dayNames[i]}: ")
         for j in range(lessonsPerDay[i]):  # for each lesson of that day
             boxInfo = boxToDict(lessonData[idx])
             if boxInfo is not None:
                 name, prof, room, start, end = boxInfo.values()
-            
+                print(name, start, end)
             idx += 1
 
 
@@ -86,6 +85,14 @@ def getNumberOfLessonsPerDay(htmlContent):
         numberOfLessonsPerDay[dayIdx - 1] += 1
     return numberOfLessonsPerDay
 
+def addValidNames():
+    global validNames
+    
+    validNames.append(calculusNames[calculusInEnglish])
+    validNames.append(geometryNames[geometryInEnglish])
+    validNames.append(programmingNames[programmingInEnglish])
+    validNames.append(labNames[programmingInEnglish][group2])
+
 def loadHTMLContent(url):
     options = webdriver.ChromeOptions()
     options.add_argument("--headless")
@@ -100,6 +107,14 @@ def loadHTMLContent(url):
 
     driver.quit()
     return htmlContent
+
+def getUserChoices():
+    global calculusInEnglish, programmingInEnglish, geometryInEnglish, group2
+    
+    calculusInEnglish = input("Do you want to follow Calculus 1 in English? (y/n) ") == "y"
+    geometryInEnglish = input("Do you want to follow Geometry and Linear Algebra in English? (y/n) ") == "y"
+    programmingInEnglish = input("Do you want to follow Programming 1 in English? (y/n) ") == "y"
+    group2 = input("Are you in the second group of the Programming 1 Lab? (or if you follow the lab lessons in english) (y/n) ") == "y"
 
 
 if __name__ == "__main__":
