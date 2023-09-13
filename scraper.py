@@ -3,8 +3,12 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
+import tabula
+import datetime
+
 
 url = "https://easyacademy.unitn.it/AgendaStudentiUnitn/index.php?view=easycourse&form-type=corso&include=corso&txtcurr=1+-+Scienze+e+Tecnologie+Informatiche&anno=2023&corso=0514G&anno2%5B%5D=P0405%7C1&date=12-09-2023&periodo_didattico=&_lang=it&list=&week_grid_type=-1&ar_codes_=&ar_select_=&col_cells=0&empty_box=0&only_grid=0&highlighted_date=0&all_events=0&faculty_group=0#"
+trainTablePath = "TrainTable.pdf"
 
 calculusInEnglish = programmingInEnglish = geometryInEnglish = group2 = False
 
@@ -17,18 +21,24 @@ labNames = [["Programmazione 1 - LAB (gruppo 1)", "Programmazione 1 - LAB (grupp
 # es. labNames[0][1] -> italiano e gruppo
 
 validNames = []
-
-
-
+stationNames = ["Trento", "Trento S. Chiara", "Trento S. Bartolameo", "Villazzano", "Mesiano", "Pergine Valsugana", ""]
+stationTimes = []
 
 
 def main():
+    
+    stationTimes = getStationsTimes("Mesiano", "Strigno")
+    
     if(not getReferencesSaved()):
         print("There are no preferences saved")
         getUserChoices()
         savePreferences()
     addValidNames()
     
+    dayOfWeek = datetime.date.today().weekday()
+    if dayOfWeek >= 5:
+        print("Questo programma funziona solo da lunedì a venerdì. Ciao")
+        return
     
     
     htmlContent = loadHTMLContent(url)
@@ -37,15 +47,32 @@ def main():
     
     dayNames = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì"]
     
+    lastLessonHour = 0
+    lastLessonMinute = 0
+    
     idx = 0
     for i in range(5):  # from monday to friday
-        print(f"\n{dayNames[i]}: ")
+        if i == dayOfWeek:
+            print(f"\n{dayNames[i]}:\n")
+            
         for j in range(lessonsPerDay[i]):  # for each lesson of that day
             boxInfo = boxToDict(lessonData[idx])
+            idx += 1
             if boxInfo is not None:
                 name, prof, room, start, end = boxInfo.values()
-                print(name, start, end)
-            idx += 1
+                
+                if i == dayOfWeek:
+                    print(f"{name} - {prof} - {room} - {start} - {end}")
+                    lastLessonHour = int(end[:2])
+                    lastLessonMinute = int(end[3:])
+                    totalMinutes = lastLessonHour * 60 + lastLessonMinute
+                    
+    print(f"\nLast lesson ends at {lastLessonHour}:{lastLessonMinute}")
+    # find the first train after the last lesson
+    # TODO
+    
+    print(f"There is a train from Mesiano to Strigno at: ")
+            
 
 
 
@@ -133,6 +160,44 @@ def getReferencesSaved():
         return True
     except:
         return False
+    
+
+def loadCSV():
+    import os
+    if os.path.exists("TrainTable.csv"): 
+        print("File already exists, and it will not get loaded again")
+        return
+    
+    tables = tabula.read_pdf(trainTablePath, pages='all')
+    for i, table in enumerate(tables):
+        if i == 1: # second table 
+            table.to_csv(f'TrainTable.csv', index=False)
+
+    
+def getStationsTimes(stationName1, stationName2):
+    loadCSV()
+    times = []
+    with open("TrainTable.csv", "r") as file:
+        lines = file.readlines()
+        for line in lines:
+            if stationName1 in line:
+                split = line.split(",")
+                times = [x.replace("\n", "") for x in split if ":" in x or x in ["", "-"]]
+                
+                return times
+            
+                
+                
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
 if __name__ == "__main__":
     main()
