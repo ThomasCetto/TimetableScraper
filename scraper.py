@@ -4,7 +4,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 
-SQUARES_PER_COLUMN = 25
 url = "https://easyacademy.unitn.it/AgendaStudentiUnitn/index.php?view=easycourse&form-type=corso&include=corso&txtcurr=1+-+Scienze+e+Tecnologie+Informatiche&anno=2023&corso=0514G&anno2%5B%5D=P0405%7C1&date=12-09-2023&periodo_didattico=&_lang=it&list=&week_grid_type=-1&ar_codes_=&ar_select_=&col_cells=0&empty_box=0&only_grid=0&highlighted_date=0&all_events=0&faculty_group=0#"
 
 calculusInEnglish = programmingInEnglish = geometryInEnglish = group2 = False
@@ -24,8 +23,12 @@ validNames = []
 
 
 def main():
-    getUserChoices()
+    if(not getReferencesSaved()):
+        print("There are no preferences saved")
+        getUserChoices()
+        savePreferences()
     addValidNames()
+    
     
     
     htmlContent = loadHTMLContent(url)
@@ -116,6 +119,20 @@ def getUserChoices():
     programmingInEnglish = input("Do you want to follow Programming 1 in English? (y/n) ") == "y"
     group2 = input("Are you in the second group of the Programming 1 Lab? (or if you follow the lab lessons in english) (y/n) ") == "y"
 
+def savePreferences():
+    with open("user_preferences.txt", "w") as file:
+        file.write(f"{calculusInEnglish}\n{geometryInEnglish}\n{programmingInEnglish}\n{group2}")
+
+def getReferencesSaved():
+    try:
+        with open("user_preferences.txt", "r") as file:
+            calculusInEnglish = file.readline()
+            geometryInEnglish = file.readline()
+            programmingInEnglish = file.readline()
+            group2 = file.readline()
+        return True
+    except:
+        return False
 
 if __name__ == "__main__":
     main()
