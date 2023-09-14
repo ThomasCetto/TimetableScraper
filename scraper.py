@@ -9,6 +9,7 @@ import datetime
 
 url = "https://easyacademy.unitn.it/AgendaStudentiUnitn/index.php?view=easycourse&form-type=corso&include=corso&txtcurr=1+-+Scienze+e+Tecnologie+Informatiche&anno=2023&corso=0514G&anno2%5B%5D=P0405%7C1&date=12-09-2023&periodo_didattico=&_lang=it&list=&week_grid_type=-1&ar_codes_=&ar_select_=&col_cells=0&empty_box=0&only_grid=0&highlighted_date=0&all_events=0&faculty_group=0#"
 trainTablePath = "TrainTable.pdf"
+MINUTES_TOLERANCE = 15
 
 calculusInEnglish = programmingInEnglish = geometryInEnglish = group2 = False
 
@@ -30,14 +31,14 @@ def main():
     stationTimes = getStationsTimes("Mesiano", "Strigno")
     
     if(not getReferencesSaved()):
-        print("There are no preferences saved")
+        print("There are no preferences saved yet")
         getUserChoices()
         savePreferences()
     addValidNames()
     
     dayOfWeek = datetime.date.today().weekday()
     if dayOfWeek >= 5:
-        print("Questo programma funziona solo da lunedì a venerdì. Ciao")
+        print("This program works only from Monday to Friday. Bye")
         return
     
     
@@ -45,7 +46,7 @@ def main():
     lessonsPerDay = getNumberOfLessonsPerDay(htmlContent)
     lessonData = getBoxesLessonData(htmlContent)
     
-    dayNames = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì"]
+    dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
     
     lastLessonHour = 0
     lastLessonMinute = 0
@@ -69,10 +70,16 @@ def main():
                     
     print(f"\nLast lesson ends at {lastLessonHour}:{lastLessonMinute}")
     # find the first train after the last lesson
-    # TODO
+    print(stationTimes)
+    rightTrainTime = filter(
+        lambda x: x not in ["", "-"] and (totalMinutes - MINUTES_TOLERANCE < int(x.split(":")[0])*60 + int(x.split(":")[1])),
+        stationTimes
+    )
+
+
     
-    print(f"There is a train from Mesiano to Strigno at: ")
-            
+    print(f"There are trains from Mesiano to Strigno at: {list(rightTrainTime)[:3]}")
+    
 
 
 
@@ -141,22 +148,25 @@ def loadHTMLContent(url):
 def getUserChoices():
     global calculusInEnglish, programmingInEnglish, geometryInEnglish, group2
     
-    calculusInEnglish = input("Do you want to follow Calculus 1 in English? (y/n) ") == "y"
-    geometryInEnglish = input("Do you want to follow Geometry and Linear Algebra in English? (y/n) ") == "y"
-    programmingInEnglish = input("Do you want to follow Programming 1 in English? (y/n) ") == "y"
-    group2 = input("Are you in the second group of the Programming 1 Lab? (or if you follow the lab lessons in english) (y/n) ") == "y"
+    calculusInEnglish = input("Do you want to follow Calculus 1 in English? (y/n) ").lower() == "y"
+    geometryInEnglish = input("Do you want to follow Geometry and Linear Algebra in English? (y/n) ").lower() == "y"
+    programmingInEnglish = input("Do you want to follow Programming 1 in English? (y/n) ").lower() == "y"
+    group2 = input("Are you in the second group of the Programming 1 Lab? (or if you follow the lab lessons in english) (y/n) ").lower() == "y"
 
 def savePreferences():
     with open("user_preferences.txt", "w") as file:
-        file.write(f"{calculusInEnglish}\n{geometryInEnglish}\n{programmingInEnglish}\n{group2}")
+        file.write(f"{int(calculusInEnglish)}\n{int(geometryInEnglish)}\n{int(programmingInEnglish)}\n{int(group2)}")
 
 def getReferencesSaved():
     try:
         with open("user_preferences.txt", "r") as file:
-            calculusInEnglish = file.readline()
-            geometryInEnglish = file.readline()
-            programmingInEnglish = file.readline()
-            group2 = file.readline()
+            calculusInEnglish = int(file.readline())
+            geometryInEnglish = int(file.readline())
+            programmingInEnglish = int(file.readline())
+            group2 = int(file.readline())
+            print(f"{calculusInEnglish}, {geometryInEnglish}, {programmingInEnglish}, {group2}")
+
+            # all lines are written and no errors occurred
         return True
     except:
         return False
@@ -165,7 +175,7 @@ def getReferencesSaved():
 def loadCSV():
     import os
     if os.path.exists("TrainTable.csv"): 
-        print("File already exists, and it will not get loaded again")
+        print("File of train timetable already exists, and it will not get loaded again")
         return
     
     tables = tabula.read_pdf(trainTablePath, pages='all')
