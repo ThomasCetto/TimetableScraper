@@ -1,3 +1,8 @@
+# TODO check if the ride is on train or bus, and also if it is a festivity
+
+
+
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
