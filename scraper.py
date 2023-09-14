@@ -19,9 +19,9 @@ programmingNames = ["Programmazione 1 - LEZ", "Computer Programming 1 - LEZ"]
 labNames = [["Programmazione 1 - LAB (gruppo 1)", "Programmazione 1 - LAB (gruppo 2)"], 
             ["Computer Programming 1 - LAB", "Computer Programming 1 - LAB"]]
 # labNames[programmingInEnglish][group2]
-# es. labNames[0][1] -> italiano e gruppo
+# es. labNames[0][1] -> italiano e gruppo 2
 
-validNames = []
+validLessonNames = []
 stationNames = ["Trento", "Trento S. Chiara", "Trento S. Bartolameo", "Villazzano", "Mesiano", "Pergine Valsugana", ""]
 stationTimes = []
 
@@ -32,9 +32,13 @@ def main():
     
     if(not getReferencesSaved()):
         print("There are no preferences saved yet")
-        getUserChoices()
+        askForUserChoices()
         savePreferences()
-    addValidNames()
+    addValidLessonNames()
+    
+    print(f"english: {programmingInEnglish}, group2: {group2}")
+    print(f"{validLessonNames}\n\n\n\n\n")
+    
     
     dayOfWeek = datetime.date.today().weekday()
     if dayOfWeek >= 5:
@@ -69,17 +73,29 @@ def main():
                     totalMinutes = lastLessonHour * 60 + lastLessonMinute
                     
     print(f"\nLast lesson ends at {lastLessonHour}:{lastLessonMinute}")
+
     # find the first train after the last lesson
     print(stationTimes)
-    rightTrainTime = filter(
-        lambda x: x not in ["", "-"] and (totalMinutes - MINUTES_TOLERANCE < int(x.split(":")[0])*60 + int(x.split(":")[1])),
-        stationTimes
-    )
+
+
+    rightTrainTime = []
+    for start, end in zip(stationTimes[0], stationTimes[1]):
+        if start in ["-", ""]:
+            continue 
+
+
+        split = start.split(":")
+        hour = int(split[0])
+        minute = int(split[1])
+        if totalMinutes - MINUTES_TOLERANCE < hour * 60 + minute:
+            if end not in ["-", ""]:
+                rightTrainTime.append(f"{hour}:{minute}")
+
 
 
     
     print(f"There are trains from Mesiano to Strigno at: {list(rightTrainTime)[:3]}")
-    
+
 
 
 
@@ -98,7 +114,7 @@ def boxToDict(box):
     return d if userFollowsCourse(d) else None
 
 def userFollowsCourse(d):
-    return d["course_name"] in validNames
+    return d["course_name"] in validLessonNames
 
 def getTableClasses(htmlContent):
     soup = BeautifulSoup(str(htmlContent), 'html.parser')
@@ -122,13 +138,13 @@ def getNumberOfLessonsPerDay(htmlContent):
         numberOfLessonsPerDay[dayIdx - 1] += 1
     return numberOfLessonsPerDay
 
-def addValidNames():
-    global validNames
+def addValidLessonNames():
+    global validLessonNames
     
-    validNames.append(calculusNames[calculusInEnglish])
-    validNames.append(geometryNames[geometryInEnglish])
-    validNames.append(programmingNames[programmingInEnglish])
-    validNames.append(labNames[programmingInEnglish][group2])
+    validLessonNames.append(calculusNames[calculusInEnglish])
+    validLessonNames.append(geometryNames[geometryInEnglish])
+    validLessonNames.append(programmingNames[programmingInEnglish])
+    validLessonNames.append(labNames[programmingInEnglish][group2])
 
 def loadHTMLContent(url):
     options = webdriver.ChromeOptions()
@@ -145,7 +161,7 @@ def loadHTMLContent(url):
     driver.quit()
     return htmlContent
 
-def getUserChoices():
+def askForUserChoices():
     global calculusInEnglish, programmingInEnglish, geometryInEnglish, group2
     
     calculusInEnglish = input("Do you want to follow Calculus 1 in English? (y/n) ").lower() == "y"
@@ -160,15 +176,20 @@ def savePreferences():
 def getReferencesSaved():
     try:
         with open("user_preferences.txt", "r") as file:
+            print("Preferences already saved, loading them...")
+
+            global calculusInEnglish, programmingInEnglish, geometryInEnglish, group2
+
             calculusInEnglish = int(file.readline())
             geometryInEnglish = int(file.readline())
             programmingInEnglish = int(file.readline())
             group2 = int(file.readline())
-            print(f"{calculusInEnglish}, {geometryInEnglish}, {programmingInEnglish}, {group2}")
+            print(f"{calculusInEnglish}, {geometryInEnglish}, {programmingInEnglish}, {group2}, {type(group2)}")
 
             # all lines are written and no errors occurred
         return True
     except:
+        print("Preferences not saved, will be asked to the user")
         return False
     
 
@@ -187,14 +208,18 @@ def loadCSV():
 def getStationsTimes(stationName1, stationName2):
     loadCSV()
     times = []
+    found1, found2 = False, False
     with open("TrainTable.csv", "r") as file:
         lines = file.readlines()
         for line in lines:
-            if stationName1 in line:
+            if not found1 and stationName1 in line:
                 split = line.split(",")
-                times = [x.replace("\n", "") for x in split if ":" in x or x in ["", "-"]]
-                
-                return times
+                times.append([x.replace("\n", "") for x in split if ":" in x or x in ["", "-"]])
+            if not found2 and stationName2 in line:
+                split = line.split(",")
+                times.append([x.replace("\n", "") for x in split if ":" in x or x in ["", "-"]])
+    
+    return times
             
                 
                 
