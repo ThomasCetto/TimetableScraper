@@ -10,6 +10,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import tabula
 import datetime
+from datetime import date
 
 
 url = "https://easyacademy.unitn.it/AgendaStudentiUnitn/index.php?view=easycourse&form-type=corso&include=corso&txtcurr=1+-+Scienze+e+Tecnologie+Informatiche&anno=2023&corso=0514G&anno2%5B%5D=P0405%7C1&date=12-09-2023&periodo_didattico=&_lang=it&list=&week_grid_type=-1&ar_codes_=&ar_select_=&col_cells=0&empty_box=0&only_grid=0&highlighted_date=0&all_events=0&faculty_group=0#"
@@ -32,7 +33,15 @@ stationTimes = []
 
 
 def main():
+
+    today = date.today()
+    split = str(today).split("-")
+    today = f"{split[2]}-{split[1]}-{split[0]}"
     
+    global url
+    url = "https://easyacademy.unitn.it/AgendaStudentiUnitn/index.php?view=easycourse&form-type=corso&include=corso&txtcurr=1+-+Scienze+e+Tecnologie+Informatiche&anno=" + split[0] + "&corso=0514G&anno2%5B%5D=P0405%7C1&date=" + today + "&periodo_didattico=&_lang=it&list=&week_grid_type=-1&ar_codes_=&ar_select_=&col_cells=0&empty_box=0&only_grid=0&highlighted_date=0&all_events=0&faculty_group=0#"
+    print(url)
+
     stationTimes = getStationsTimes("Mesiano", "Strigno")
     
     if(not getReferencesSaved()):
@@ -41,8 +50,7 @@ def main():
         savePreferences()
     addValidLessonNames()
     
-    print(f"english: {programmingInEnglish}, group2: {group2}")
-    print(f"{validLessonNames}\n\n\n\n\n")
+    print(f"Valid lessons: {validLessonNames}\n")
     
     
     dayOfWeek = datetime.date.today().weekday()
@@ -62,9 +70,6 @@ def main():
     
     idx = 0
     for i in range(5):  # from monday to friday
-        if i == dayOfWeek:
-            print(f"\n{dayNames[i]}:\n")
-            
         for j in range(lessonsPerDay[i]):  # for each lesson of that day
             boxInfo = boxToDict(lessonData[idx])
             idx += 1
@@ -72,16 +77,14 @@ def main():
                 name, prof, room, start, end = boxInfo.values()
                 
                 if i == dayOfWeek:
-                    print(f"{name} - {prof} - {room} - {start} - {end}")
                     lastLessonHour = int(end[:2])
                     lastLessonMinute = int(end[3:])
                     totalMinutes = lastLessonHour * 60 + lastLessonMinute
                     
     print(f"\nLast lesson ends at {lastLessonHour}:{lastLessonMinute}")
 
-    # find the first train after the last lesson
-    print(stationTimes)
 
+    # find the first train after the last lesson
 
     rightTrainTime = []
     for start, end in zip(stationTimes[0], stationTimes[1]):
@@ -189,7 +192,6 @@ def getReferencesSaved():
             geometryInEnglish = int(file.readline())
             programmingInEnglish = int(file.readline())
             group2 = int(file.readline())
-            print(f"{calculusInEnglish}, {geometryInEnglish}, {programmingInEnglish}, {group2}, {type(group2)}")
 
             # all lines are written and no errors occurred
         return True
