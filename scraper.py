@@ -59,7 +59,8 @@ def main():
     stationTimes = getStationsTimes("Mesiano", stationName)
     trainOrBus = getIfBus()
 
-    print("Train or bus: " + trainOrBus)
+    print(f"Festivity? : {getIfFestivity()}")
+    print(f"Train or bus: {trainOrBus}")
     print(f"Valid lessons: {validLessonNames}\n")
     
     
@@ -255,10 +256,26 @@ def getStationsTimes(stationName1, stationName2):
 def getIfBus():
     loadCSV()
     with open("TrainTable.csv", "r") as file:
-        print(file.readlines())
+        line = file.readlines()[0]
+        split = line.split(",")
+        split = filter(lambda x: x[0] != "U", split) # remove Unnamed
+        split = ["B" if "BUS" in x else "T" for x in split]
+
+        print("____" + str(len(split)))
+    return split
+
+
+
 
 def getIfFestivity():
-    pass
+    loadCSV()
+    with open("TrainTable.csv", "r") as file:
+        line = file.readlines()[5]
+        split = line.split(",")[1:-1]
+        print("-------" + str(len(split)))
+    return split
+
+
             
                 
                 
