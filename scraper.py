@@ -28,7 +28,7 @@ labNames = [["Programmazione 1 - LAB (gruppo 1)", "Programmazione 1 - LAB (grupp
 # es. labNames[0][1] -> italiano e gruppo 2
 
 validLessonNames = []
-stationNames = ["Trento", "Trento S. Chiara", "Trento S. Bartolameo", "Villazzano", "Mesiano", "Pergine Valsugana", ""]
+stationNames = ["Trento", "Trento S. Chiara", "Trento S. Bartolameo", "Villazzano", "Mesiano", "Pergine Valsugana", "S. Cristoforo al L. I", "Calceranica", "Caldonazzo", "Levico Terme", "Roncegno B. M.", "Borgo Valsugana Centro", "Borgo Valsugana Est", "Strigno", "Grigno", "Tezze di Grigno", "Primomlano", "Cismon del Grappa", "S. Marino", "Carpanè Valstagna", "S. Nazario", "Solagna", "Bassano del Grappa"]
 stationTimes = []
 
 
@@ -42,14 +42,24 @@ def main():
     url = "https://easyacademy.unitn.it/AgendaStudentiUnitn/index.php?view=easycourse&form-type=corso&include=corso&txtcurr=1+-+Scienze+e+Tecnologie+Informatiche&anno=" + split[0] + "&corso=0514G&anno2%5B%5D=P0405%7C1&date=" + today + "&periodo_didattico=&_lang=it&list=&week_grid_type=-1&ar_codes_=&ar_select_=&col_cells=0&empty_box=0&only_grid=0&highlighted_date=0&all_events=0&faculty_group=0#"
     print(url)
 
-    stationTimes = getStationsTimes("Mesiano", "Strigno")
+    
     
     if(not getReferencesSaved()):
         print("There are no preferences saved yet")
         askForUserChoices()
         savePreferences()
     addValidLessonNames()
+
+    stationName = askUserStation()
     
+
+
+    print("STATION CHOSEN IS " + stationName)
+
+    stationTimes = getStationsTimes("Mesiano", stationName)
+    trainOrBus = getIfBus()
+
+    print("Train or bus: " + trainOrBus)
     print(f"Valid lessons: {validLessonNames}\n")
     
     
@@ -62,12 +72,9 @@ def main():
     htmlContent = loadHTMLContent(url)
     lessonsPerDay = getNumberOfLessonsPerDay(htmlContent)
     lessonData = getBoxesLessonData(htmlContent)
-    
-    dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-    
+
     lastLessonHour = 0
     lastLessonMinute = 0
-    
     idx = 0
     for i in range(5):  # from monday to friday
         for j in range(lessonsPerDay[i]):  # for each lesson of that day
@@ -101,11 +108,26 @@ def main():
 
 
 
+
+
+    print(f"There are trains from Mesiano to {stationName} at: {list(rightTrainTime)[:3]}")
+
+
+def askUserStation():
+    try:
+        right = False
+        while not right:
+            print("Insert the index of the station you want to go to: ")
+            for ind, station in enumerate(stationNames):
+                print(f"{ind}): {station}")
+            stationIndex = int(input())
+            right = True
+            return stationNames[stationIndex]
+    except:
+        print("INDEX NOT VALID, TRY AGAIN")
+        return askUserStation()
+
     
-    print(f"There are trains from Mesiano to Strigno at: {list(rightTrainTime)[:3]}")
-
-
-
 
 def boxToDict(box):
     d = {}
@@ -212,6 +234,8 @@ def loadCSV():
             table.to_csv(f'TrainTable.csv', index=False)
 
     
+
+    
 def getStationsTimes(stationName1, stationName2):
     loadCSV()
     times = []
@@ -227,6 +251,14 @@ def getStationsTimes(stationName1, stationName2):
                 times.append([x.replace("\n", "") for x in split if ":" in x or x in ["", "-"]])
     
     return times
+
+def getIfBus():
+    loadCSV()
+    with open("TrainTable.csv", "r") as file:
+        print(file.readlines())
+
+def getIfFestivity():
+    pass
             
                 
                 
