@@ -1,8 +1,3 @@
-# TODO check if the ride is on train or bus, and also if it is a festivity
-
-
-
-
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -28,7 +23,7 @@ labNames = [["Programmazione 1 - LAB (gruppo 1)", "Programmazione 1 - LAB (grupp
 # es. labNames[0][1] -> italiano e gruppo 2
 
 validLessonNames = []
-stationNames = ["Trento", "Trento S. Chiara", "Trento S. Bartolameo", "Villazzano", "Mesiano", "Pergine Valsugana", "S. Cristoforo al L. I", "Calceranica", "Caldonazzo", "Levico Terme", "Roncegno B. M.", "Borgo Valsugana Centro", "Borgo Valsugana Est", "Strigno", "Grigno", "Tezze di Grigno", "Primomlano", "Cismon del Grappa", "S. Marino", "Carpanè Valstagna", "S. Nazario", "Solagna", "Bassano del Grappa"]
+stationNames = ["Mesiano", "Pergine Valsugana", "S. Cristoforo al L. I", "Calceranica", "Caldonazzo", "Levico Terme", "Roncegno B. M.", "Borgo Valsugana Centro", "Borgo Valsugana Est", "Strigno", "Grigno", "Tezze di Grigno", "Primomlano", "Cismon del Grappa", "S. Marino", "Carpanè Valstagna", "S. Nazario", "Solagna", "Bassano del Grappa"]
 stationTimes = []
 
 
@@ -58,10 +53,15 @@ def main():
 
     stationTimes = getStationsTimes("Mesiano", stationName)
     trainOrBus = getIfBus()
-
-    print(f"Festivity? : {getIfFestivity()}")
-    print(f"Train or bus: {trainOrBus}")
-    print(f"Valid lessons: {validLessonNames}\n")
+    festivities = getIfFestivity()
+    
+    elementsToDelete = []
+    for i in range(len(festivities)):
+        if festivities[i]:
+            elementsToDelete.append(i)
+        
+    for l in [stationTimes[0], stationTimes[1], trainOrBus, festivities]:
+        l[:] = [element for idx, element in enumerate(l) if idx not in elementsToDelete]
     
     
     dayOfWeek = datetime.date.today().weekday()
@@ -94,24 +94,25 @@ def main():
 
     # find the first train after the last lesson
 
-    rightTrainTime = []
-    for start, end in zip(stationTimes[0], stationTimes[1]):
+    rightTrainInfo = []
+    
+    
+    for start, end, vehicle in zip(stationTimes[0], stationTimes[1], trainOrBus):
         if start in ["-", ""]:
             continue 
-
 
         split = start.split(":")
         hour = int(split[0])
         minute = int(split[1])
         if totalMinutes - MINUTES_TOLERANCE < hour * 60 + minute:
             if end not in ["-", ""]:
-                rightTrainTime.append(f"{hour}:{minute}")
+                rightTrainInfo.append( (f"{hour}:{minute}", vehicle) )
 
+    # Final message
 
-
-
-
-    print(f"There are trains from Mesiano to {stationName} at: {list(rightTrainTime)[:3]}")
+    print("The first ways to go from Mesiano to " + stationName + " are: ")
+    for time, vehicle in rightTrainInfo[:3]:
+        print(f"{'BUS' if {vehicle == 'B'} else 'Train'} at {time}")
 
 
 def askUserStation():
@@ -250,6 +251,8 @@ def getStationsTimes(stationName1, stationName2):
             if not found2 and stationName2 in line:
                 split = line.split(",")
                 times.append([x.replace("\n", "") for x in split if ":" in x or x in ["", "-"]])
+                
+        del times[0][-8] # there was a weird empty space here
     
     return times
 
@@ -260,8 +263,6 @@ def getIfBus():
         split = line.split(",")
         split = filter(lambda x: x[0] != "U", split) # remove Unnamed
         split = ["B" if "BUS" in x else "T" for x in split]
-
-        print("____" + str(len(split)))
     return split
 
 
@@ -272,8 +273,9 @@ def getIfFestivity():
     with open("TrainTable.csv", "r") as file:
         line = file.readlines()[5]
         split = line.split(",")[1:-1]
-        print("-------" + str(len(split)))
-    return split
+        del split[-8] # there was a weird empty space here
+    
+    return [x == "(3)" for x in split]
 
 
             
@@ -292,4 +294,8 @@ def getIfFestivity():
 
 if __name__ == "__main__":
     main()
+    
+    
+    
+# TODO: se si esegue per mercoledì non funziona
 
